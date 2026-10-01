@@ -44,3 +44,5 @@ Build Release | ARM.
 The VICE source is referenced by the git submodule in .gitmodules and pinned in ViceSourcePin.txt. Build ARM32 VICE cores named vice_x64_libretro.dll and vice_x128_libretro.dll and place them in the app Cores folder.
 
 Only use software, disk images, and ROM material you are legally entitled to use.
+
+Packaging branch trigger.
