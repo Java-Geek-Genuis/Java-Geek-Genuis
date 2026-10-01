@@ -1,5 +1,6 @@
 #pragma once
 #include "App.g.h"
+// ARM32 package build marker
 namespace CommodoreWarpUWP {
 public ref class App sealed {
 public:
