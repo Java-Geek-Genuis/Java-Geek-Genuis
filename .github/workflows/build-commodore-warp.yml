@@ -1,4 +1,5 @@
 name: Build Commodore Warp ARM32 appx
+# Verified ARM32 UWP packaging pipeline
 
 on:
   push:
