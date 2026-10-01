@@ -1,7 +1,7 @@
 #pragma once
 #include "App.g.h"
 namespace CommodoreWarpUWP {
-ref class App sealed : public Windows::UI::Xaml::Application {
+ref class App sealed {
 public:
     App();
 protected:
