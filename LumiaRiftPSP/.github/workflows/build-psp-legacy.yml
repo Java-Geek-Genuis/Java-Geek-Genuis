@@ -1,0 +1,23 @@
+name: Build PPSSPP ARM32 legacy
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    defaults:
+      run:
+        working-directory: LumiaRiftPSP
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build PPSSPP legacy ARM
+        shell: pwsh
+        run: .\Build-All.ps1 -Configuration Release -PspConfiguration "UWP Gold 14393"
+      - name: Upload PSP package
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPSSPP-UWP-ARM32-legacy
+          path: LumiaRiftPSP/artifacts/*
+          if-no-files-found: error
