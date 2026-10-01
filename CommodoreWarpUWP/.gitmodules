@@ -1,0 +1,3 @@
+[submodule "ThirdParty/vice-libretro"]
+	path = CommodoreWarpUWP/ThirdParty/vice-libretro
+	url = https://github.com/libretro/vice-libretro.git

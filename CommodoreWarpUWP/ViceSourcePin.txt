@@ -1,0 +1,6 @@
+# VICE source pin for this project
+
+Repository: https://github.com/libretro/vice-libretro.git
+Pinned commit: 9d7983826ea792f6cce7fdfe6c09488129c6f886
+
+The GitHub connector used to build this repository cannot create a cross-repository gitlink, so build scripts clone this exact commit when the ThirdParty directory is empty.

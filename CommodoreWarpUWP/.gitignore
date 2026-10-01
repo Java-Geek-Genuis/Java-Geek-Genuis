@@ -1,0 +1,9 @@
+Build/
+bin/
+obj/
+artifacts/
+.vs/
+*.user
+*.suo
+*.appxupload
+*.appxbundle
