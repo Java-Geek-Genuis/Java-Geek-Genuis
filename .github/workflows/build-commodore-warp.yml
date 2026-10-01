@@ -34,34 +34,22 @@ jobs:
         run: |
           msbuild CommodoreWarpUWP.sln /m:1 /t:Rebuild /p:Configuration=Release /p:Platform=ARM /v:minimal
 
-      - name: Pack unsigned ARM32 appx
+      - name: Collect MSBuild-generated ARM32 appx
         shell: pwsh
-        working-directory: CommodoreWarpUWP
         run: |
-          $build = Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\Build\ARM\Release'
-          $package = Join-Path $env:GITHUB_WORKSPACE 'PackageRoot'
-          Remove-Item $package -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force $package | Out-Null
-          $manifest = Join-Path $build 'AppxManifest.xml'
-          if (!(Test-Path $manifest)) { Write-Error 'Build did not generate AppxManifest.xml' }
-          Get-ChildItem $build -File | Where-Object { $_.Extension -notin @('.pdb','.obj','.tlog','.appx','.appxbundle','.msix','.msixbundle','.cer') } | ForEach-Object { Copy-Item $_.FullName (Join-Path $package $_.Name) -Force }
-          Copy-Item (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\CommodoreWarpUWP\Assets') (Join-Path $package 'Assets') -Recurse -Force
-          Copy-Item $manifest (Join-Path $package 'AppxManifest.xml') -Force
-          $makeAppx = Get-ChildItem "$env:ProgramFiles(x86)\Windows Kits\10\bin" -Recurse -Filter MakeAppx.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\x64\\MakeAppx\.exe$' } | Select-Object -First 1
-          if (!$makeAppx) { Write-Error 'MakeAppx.exe was not found in the installed Windows SDK.' }
-          $out = Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarp_ARM32.appx'
-          & $makeAppx.FullName pack /d $package /p $out /o
-          if ($LASTEXITCODE -ne 0 -or !(Test-Path $out)) { Write-Error 'MakeAppx failed to produce CommodoreWarp_ARM32.appx' }
+          $out = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter 'CommodoreWarpUWP_*_ARM.appx' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (!$pkg) { Write-Error 'MSBuild did not generate an ARM32 .appx package.' }
+          Copy-Item $pkg.FullName (Join-Path $out 'CommodoreWarp_ARM32.appx') -Force
+          $cert = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter '*.cer' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($cert) { Copy-Item $cert.FullName (Join-Path $out $cert.Name) -Force }
 
       - name: Verify package
         shell: pwsh
         run: |
-          $pkg = Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarp_ARM32.appx'
+          $pkg = Join-Path $env:GITHUB_WORKSPACE 'artifacts\CommodoreWarp_ARM32.appx'
           if (!(Test-Path $pkg)) { Write-Error 'Package missing.' }
           Get-Item $pkg | Select-Object FullName,Length
-      - name: Upload ARM32 package
-        uses: actions/upload-artifact@v4
-        with:
-          name: Commodore-Warp-ARM32-appx
-          path: artifacts/*
-          if-no-files-found: error
+
