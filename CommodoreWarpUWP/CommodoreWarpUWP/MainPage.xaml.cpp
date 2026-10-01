@@ -65,7 +65,15 @@ String^ MainPage::CorePath()
 
 void MainPage::OnLoaded(Object^, RoutedEventArgs^)
 {
-    CompositionTarget::Rendering += ref new RenderingEventHandler(this, &MainPage::Frame);
+    if (!timer)
+    {
+        timer = ref new Windows::UI::Xaml::DispatcherTimer();
+        Windows::Foundation::TimeSpan span;
+        span.Duration = 166700;
+        timer->Interval = span;
+        timer->Tick += ref new Windows::Foundation::EventHandler<Object^>(this, &MainPage::TimerTick);
+        timer->Start();
+    }
     CpuSlider->Value = 1;
     CpuText->Text = L"1.0 MHz";
     StatusText->Text = L"Ready. C64 is the default.";
@@ -142,6 +150,11 @@ void MainPage::Load_Click(Object^, RoutedEventArgs^)
             try { t.get(); } catch (Exception^) {}
         });
     });
+}
+
+void MainPage::TimerTick(Object^ sender, Object^ args)
+{
+    Frame(sender, args);
 }
 
 void MainPage::Frame(Object^, Object^)
