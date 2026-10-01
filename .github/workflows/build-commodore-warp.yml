@@ -31,7 +31,7 @@ jobs:
         shell: pwsh
         working-directory: CommodoreWarpUWP
         run: |
-          msbuild CommodoreWarpUWP.sln /m /p:Configuration=Release /p:Platform=ARM /p:AppxPackageDir="$env:GITHUB_WORKSPACE\Packages\" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
+          msbuild CommodoreWarpUWP.sln /m:1 /p:Configuration=Release /p:Platform=ARM /p:AppxPackageDir="$env:GITHUB_WORKSPACE\Packages\" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
 
       - name: Collect package
         shell: pwsh
