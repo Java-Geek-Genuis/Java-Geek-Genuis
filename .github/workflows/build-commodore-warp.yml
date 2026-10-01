@@ -9,6 +9,10 @@ on:
       - ".github/workflows/build-commodore-warp.yml"
   workflow_dispatch:
 
+concurrency:
+  group: commodore-warp-arm32
+  cancel-in-progress: true
+
 jobs:
   package:
     runs-on: windows-2022
