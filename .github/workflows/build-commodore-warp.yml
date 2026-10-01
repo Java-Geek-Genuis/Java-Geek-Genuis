@@ -5,13 +5,14 @@ on:
   push:
     branches:
       - commodore-warp-uwp
+      - commodore-warp-package
     paths:
       - "CommodoreWarpUWP/**"
       - ".github/workflows/build-commodore-warp.yml"
   workflow_dispatch:
 
 concurrency:
-  group: commodore-warp-arm32
+  group: commodore-warp-package
   cancel-in-progress: true
 
 jobs:
