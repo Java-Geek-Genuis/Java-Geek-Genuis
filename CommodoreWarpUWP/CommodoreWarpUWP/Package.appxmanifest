@@ -10,7 +10,7 @@
 <uap:VisualElements DisplayName="Commodore Warp" Square44x44Logo="Assets\Square44Logo.png" Square150x150Logo="Assets\Square150Logo.png" Description="C64/C128 emulator with 1-64 MHz effective speed, BASIC editor, PRG export and SD workspace." BackgroundColor="#050814">
 <uap:DefaultTile Square71x71Logo="Assets\Square71Logo.png" Wide310x150Logo="Assets\Wide310Logo.png"/>
 </uap:VisualElements>
-<Extensions><uap:Extension Category="windows.fileTypeAssociation"><uap:FileTypeAssociation Name="commodorefiles"><uap:DisplayName>Commodore files</uap:DisplayName><uap:SupportedFileTypes><uap:FileType>.bas</uap:FileType><uap:FileType>.prg</uap:FileType><uap:FileType>.d64</uap:FileType><uap:FileType>.g64</uap:FileType><uap:FileType>.d81</uap:FileType><uap:FileType>.t64</uap:FileType><uap:FileType>.tap</uap:FileType><uap:FileType>.crt</uap:FileType></uap:SupportedFileTypes></uap:FileTypeAssociation></uap:Extension></Extensions>
+<Extensions><uap:Extension Category="windows.fileTypeAssociation"><uap:FileTypeAssociation Name="commodorefiles"><uap:DisplayName>Commodore files</uap:DisplayName><uap:SupportedFileTypes><uap:FileType>.bas</uap:FileType><uap:FileType>.prg</uap:FileType><uap:FileType>.d64</uap:FileType><uap:FileType>.g64</uap:FileType><uap:FileType>.d81</uap:FileType><uap:FileType>.t64</uap:FileType><uap:FileType>.tap</uap:FileType></uap:SupportedFileTypes></uap:FileTypeAssociation></uap:Extension></Extensions>
 </Application>
 </Applications>
 <Capabilities><uap:Capability Name="removableStorage"/></Capabilities>
