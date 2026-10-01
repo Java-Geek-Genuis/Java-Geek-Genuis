@@ -1,0 +1,48 @@
+name: Build Commodore Warp ARM32 appx
+
+on:
+  push:
+    branches:
+      - commodore-warp-uwp
+    paths:
+      - "CommodoreWarpUWP/**"
+      - ".github/workflows/build-commodore-warp.yml"
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build ARM32 appx
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        run: |
+          msbuild CommodoreWarpUWP.sln /m /p:Configuration=Release /p:Platform=ARM /p:AppxPackageDir="$env:GITHUB_WORKSPACE\Packages\" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
+
+      - name: Collect package
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Get-ChildItem "$env:GITHUB_WORKSPACE\Packages" -Recurse -Include *.appx,*.appxbundle,*.msix,*.msixbundle,*.cer -File | ForEach-Object {
+            Copy-Item $_.FullName $out -Force
+          }
+          if (-not (Get-ChildItem $out -File | Where-Object { $_.Extension -in ".appx",".appxbundle",".msix",".msixbundle" })) {
+            Write-Error "No app package was generated."
+          }
+
+      - name: Upload ARM32 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Commodore-Warp-ARM32-appx
+          path: artifacts/*
+          if-no-files-found: error
