@@ -1,1 +1,0 @@
-import java.io.File;\nimport java.io.FileNotFoundException;\nimport java.io.FileWriter;\nimport java.io.IOException;\nimport java.util.Scanner;\n\npublic class CosmicStarshipWars {\n    public static void main(String[] args) {\n        GameState gameState = new GameState();\n        gameState.startGame();\n    }\n}

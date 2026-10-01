@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\\$(MSBuildToolsVersion)\\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\\$(MSBuildToolsVersion)\\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <Platform Condition="'$(Platform)' == ''">ARM</Platform>
+    <ProjectGuid>{D5C67A96-3B7A-4CF3-8F8F-81CDBE0A5EA1}</ProjectGuid>
+    <OutputType>AppContainerExe</OutputType>
+    <RootNamespace>LumiaRiftGame</RootNamespace>
+    <AssemblyName>LumiaRiftGame</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>ARM</AppxBundlePlatforms>
+    <Platforms>ARM;x86</Platforms>
+    <UseDotNetNativeToolchain Condition="'$(Configuration)' == 'Release'">true</UseDotNetNativeToolchain>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'"><DebugSymbols>true</DebugSymbols><DebugType>full</DebugType><Optimize>false</Optimize><DefineConstants>DEBUG;TRACE;NETFX_CORE</DefineConstants><PlatformTarget>ARM</PlatformTarget></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'"><DebugType>pdbonly</DebugType><Optimize>true</Optimize><DefineConstants>TRACE;NETFX_CORE</DefineConstants><PlatformTarget>ARM</PlatformTarget></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'"><DebugSymbols>true</DebugSymbols><DebugType>full</DebugType><Optimize>false</Optimize><DefineConstants>DEBUG;TRACE;NETFX_CORE</DefineConstants><PlatformTarget>x86</PlatformTarget></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'"><DebugType>pdbonly</DebugType><Optimize>true</Optimize><DefineConstants>TRACE;NETFX_CORE</DefineConstants><PlatformTarget>x86</PlatformTarget></PropertyGroup>
+  <ItemGroup><Compile Include="App.xaml.cs"><DependentUpon>App.xaml</DependentUpon></Compile><Compile Include="MainPage.xaml.cs"><DependentUpon>MainPage.xaml</DependentUpon></Compile></ItemGroup>
+  <ItemGroup><AppxManifest Include="Package.appxmanifest"><SubType>Designer</SubType></AppxManifest><Content Include="Assets\\logo.png" /></ItemGroup>
+  <ItemGroup><Page Include="App.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page><Page Include="MainPage.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page></ItemGroup>
+  <ItemGroup><PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform"><Version>6.2.14</Version></PackageReference></ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\\Microsoft\\WindowsXaml\\$(VisualStudioVersion)\\Microsoft.Windows.UI.Xaml.CSharp.targets" Condition="Exists('$(MSBuildExtensionsPath)\\Microsoft\\WindowsXaml\\$(VisualStudioVersion)\\Microsoft.Windows.UI.Xaml.CSharp.targets')" />
+</Project>

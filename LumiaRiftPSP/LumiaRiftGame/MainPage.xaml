@@ -1,0 +1,85 @@
+<Page x:Class="LumiaRiftGame.MainPage"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Background="#070A16" KeyDown="Page_KeyDown" KeyUp="Page_KeyUp">
+<Grid x:Name="RootGrid">
+  <Canvas x:Name="GameCanvas" Background="#070A16"/>
+  <Grid x:Name="HudGrid" Visibility="Collapsed" IsHitTestVisible="False" Margin="18,16,18,0">
+    <StackPanel Orientation="Horizontal">
+      <TextBlock x:Name="ScoreText" Text="SCORE 000000" Foreground="White" FontSize="20"/>
+      <TextBlock x:Name="ComboText" Text="   COMBO x1" Foreground="#63E6FF" FontSize="20"/>
+    </StackPanel>
+    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+      <TextBlock x:Name="WaveText" Text="WAVE 1" Foreground="White" FontSize="20"/>
+      <TextBlock x:Name="LivesText" Text="   ♥♥♥" Foreground="#FF88D8" FontSize="20"/>
+    </StackPanel>
+  </Grid>
+  <Grid x:Name="TouchOverlay" Visibility="Collapsed" IsHitTestVisible="False">
+    <Grid VerticalAlignment="Bottom" Margin="8,0,8,12" Height="185">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="250"/><ColumnDefinition Width="*"/><ColumnDefinition Width="310"/></Grid.ColumnDefinitions>
+      <Grid Grid.Column="0">
+        <Button Content="▲" Width="82" Height="62" Tag="Up" Style="{StaticResource GameButtonStyle}" HorizontalAlignment="Center" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+        <Button Content="◀" Width="82" Height="62" Tag="Left" Style="{StaticResource GameButtonStyle}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,67,0,0" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+        <Button Content="▶" Width="82" Height="62" Tag="Right" Style="{StaticResource GameButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,67,0,0" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+        <Button Content="▼" Width="82" Height="62" Tag="Down" Style="{StaticResource GameButtonStyle}" HorizontalAlignment="Center" VerticalAlignment="Bottom" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+      </Grid>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button Content="BOOST" Width="110" Height="76" Tag="Boost" Style="{StaticResource GameButtonStyle}" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+        <Button Content="FIRE" Width="110" Height="76" Tag="Fire" Style="{StaticResource GameButtonStyle}" PointerPressed="Control_PointerPressed" PointerReleased="Control_PointerReleased" PointerCanceled="Control_PointerReleased" PointerCaptureLost="Control_PointerReleased"/>
+      </StackPanel>
+    </Grid>
+  </Grid>
+  <Grid x:Name="MenuPanel" Background="#B8070A16">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="430">
+      <TextBlock Text="LUMIA RIFT" Foreground="White" FontSize="54" FontWeight="Bold" HorizontalAlignment="Center" CharacterSpacing="100"/>
+      <TextBlock Text="NEON ARCADE // WINDOWS PHONE" Foreground="#63E6FF" HorizontalAlignment="Center" Margin="0,0,0,26"/>
+      <Button Content="PLAY RIFT RUN" Click="PlayButton_Click" Style="{StaticResource GameButtonStyle}" Height="68"/>
+      <Button Content="PSP VAULT" Click="PspButton_Click" Style="{StaticResource GameButtonStyle}" Height="68"/>
+      <Button Content="SETTINGS" Click="SettingsButton_Click" Style="{StaticResource GameButtonStyle}" Height="68"/>
+      <TextBlock Text="Neon space combat with a permission-first PSP file vault." Foreground="#AEB6D1" TextWrapping="Wrap" TextAlignment="Center" Margin="10,16,10,0"/>
+    </StackPanel>
+  </Grid>
+  <Grid x:Name="PspPanel" Visibility="Collapsed" Background="#F9070A16">
+    <StackPanel Width="520" HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="PSP VAULT" Foreground="White" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+      <TextBlock Text="Your ISO stays under your control." Foreground="#63E6FF" FontSize="17" HorizontalAlignment="Center" Margin="0,5,0,24"/>
+      <Border Background="#20173D" BorderBrush="#52D9FF" BorderThickness="1" Padding="18">
+        <StackPanel>
+          <TextBlock Text="No storage scan. No blanket file permission." Foreground="White" FontSize="16"/>
+          <TextBlock Text="Lumia Rift asks before opening the file picker. You choose the .ISO yourself." Foreground="#AEB6D1" TextWrapping="Wrap" Margin="0,8,0,0"/>
+        </StackPanel>
+      </Border>
+      <TextBlock x:Name="ConsentStatus" Text="" Foreground="#FFCC77" TextWrapping="Wrap" Margin="4,18,4,0"/>
+      <TextBlock x:Name="IsoStatus" Text="No ISO selected." Foreground="White" TextWrapping="Wrap" Margin="4,8,4,10"/>
+      <Button Content="CHOOSE PSP ISO" Click="ChooseIsoButton_Click" Style="{StaticResource GameButtonStyle}" Height="62"/>
+      <Button x:Name="LaunchIsoButton" Content="LAUNCH ISO" Click="LaunchIsoButton_Click" Style="{StaticResource GameButtonStyle}" Height="62" IsEnabled="False"/>
+      <Button Content="BACK" Click="BackFromPspButton_Click" Style="{StaticResource GameButtonStyle}" Height="62"/>
+    </StackPanel>
+  </Grid>
+  <Grid x:Name="ConsentPanel" Visibility="Collapsed" Background="#F9070A16">
+    <StackPanel Width="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="LET LUMIA RIFT OPEN A PSP FILE?" Foreground="White" FontSize="30" FontWeight="Bold" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
+      <TextBlock Text="The next screen is the normal Windows file picker. Lumia Rift will not search your storage. You choose the .ISO manually." Foreground="#AEB6D1" FontSize="17" TextWrapping="Wrap" TextAlignment="Center" Margin="0,16,0,18"/>
+      <Button Content="I ALLOW THE ISO PICKER" Click="ConsentAllowButton_Click" Style="{StaticResource GameButtonStyle}" Height="68"/>
+      <Button Content="CANCEL" Click="ConsentCancelButton_Click" Style="{StaticResource GameButtonStyle}" Height="68"/>
+    </StackPanel>
+  </Grid>
+  <Grid x:Name="GameOverPanel" Visibility="Collapsed" Background="#E8070A16">
+    <StackPanel Width="440" HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="RIFT COLLAPSED" Foreground="White" FontSize="42" FontWeight="Bold" HorizontalAlignment="Center"/>
+      <TextBlock x:Name="FinalScoreText" Text="SCORE 000000" Foreground="#63E6FF" FontSize="24" HorizontalAlignment="Center" Margin="0,8,0,20"/>
+      <Button Content="RUN AGAIN" Click="RestartButton_Click" Style="{StaticResource GameButtonStyle}" Height="65"/>
+      <Button Content="MAIN MENU" Click="MenuButton_Click" Style="{StaticResource GameButtonStyle}" Height="65"/>
+    </StackPanel>
+  </Grid>
+  <Grid x:Name="SettingsPanel" Visibility="Collapsed" Background="#F9070A16">
+    <StackPanel Width="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+      <TextBlock Text="SETTINGS" Foreground="White" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center"/>
+      <TextBlock Text="Touch: hold the arrows to move. FIRE shoots. BOOST increases speed." Foreground="#AEB6D1" TextWrapping="Wrap" TextAlignment="Center" Margin="0,14,0,0"/>
+      <TextBlock Text="Desktop: arrows/WASD move, Z fires, Shift boosts." Foreground="#AEB6D1" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0"/>
+      <Button Content="RESET PSP CONSENT" Click="ResetConsentButton_Click" Style="{StaticResource GameButtonStyle}" Height="64"/>
+      <Button Content="BACK" Click="SettingsBackButton_Click" Style="{StaticResource GameButtonStyle}" Height="64"/>
+    </StackPanel>
+  </Grid>
+</Grid>
+</Page>

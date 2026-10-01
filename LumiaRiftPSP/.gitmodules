@@ -1,0 +1,3 @@
+[submodule "ThirdParty/PPSSPP-UWP-ARM"]
+	path = LumiaRiftPSP/ThirdParty/PPSSPP-UWP-ARM
+	url = https://github.com/basharast/PPSSPP-UWP-ARM.git

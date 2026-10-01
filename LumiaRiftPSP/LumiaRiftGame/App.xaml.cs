@@ -1,0 +1,2 @@
+using Windows.ApplicationModel.Activation; using Windows.UI.Xaml;
+namespace LumiaRiftGame { sealed partial class App : Application { public App(){InitializeComponent();Suspending+=OnSuspending;} protected override void OnLaunched(LaunchActivatedEventArgs e){Window.Current.Content=new MainPage();Window.Current.Activate();} private void OnSuspending(object sender,Windows.ApplicationModel.SuspendingEventArgs e){} } }
