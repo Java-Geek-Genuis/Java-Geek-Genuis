@@ -1,6 +1,7 @@
 #pragma once
 #include "MainPage.g.h"
 #include "LibretroCore.h"
+// Final ARM32 packaging verification.
 namespace CommodoreWarpUWP {
 public ref class MainPage sealed {
 public:
