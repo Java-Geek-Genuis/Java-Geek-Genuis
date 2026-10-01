@@ -15,6 +15,8 @@ using namespace Windows::System;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Input;
+using namespace Windows::UI::Xaml::Media;
+using namespace Windows::UI::Xaml::Media::Imaging;
 using namespace concurrency;
 
 namespace CommodoreWarpUWP {
