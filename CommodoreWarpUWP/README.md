@@ -46,3 +46,5 @@ The VICE source is referenced by the git submodule in .gitmodules and pinned in 
 Only use software, disk images, and ROM material you are legally entitled to use.
 
 Packaging branch trigger.
+
+CI package definition updated.
