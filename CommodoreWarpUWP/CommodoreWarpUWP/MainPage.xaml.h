@@ -2,7 +2,7 @@
 #include "MainPage.g.h"
 #include "LibretroCore.h"
 // Final ARM32 packaging verification.
-// Per-commit CI group enabled.
+// Direct MakeAppx packaging workflow enabled.
 namespace CommodoreWarpUWP {
 public ref class MainPage sealed {
 public:
