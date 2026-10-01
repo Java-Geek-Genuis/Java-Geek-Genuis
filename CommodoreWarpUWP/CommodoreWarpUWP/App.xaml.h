@@ -2,7 +2,7 @@
 #include "App.g.h"
 // ARM32 package build marker
 // ApplicationDefinition and DependentUpon verified.
-// Manifest schema fix follows.
+// Manifest schema and asset dimensions verified.
 namespace CommodoreWarpUWP {
 public ref class App sealed {
 public:
