@@ -34,6 +34,7 @@ jobs:
           update: true
           install: >-
             make
+          path-type: inherit
 
       - name: Build VICE ARM32 C64 core
         shell: pwsh
