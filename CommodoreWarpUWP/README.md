@@ -90,3 +90,6 @@ VICE ARM32 MSVC now defines NOMINMAX to avoid Windows min/max macro collisions i
 
 
 Final emulator path: official Libretro ARM32 VICE cores are preferred; framebuffer upload is handled through the UWP PixelBuffer ABI.
+
+
+Build speed: VICE ARM32 source compilation uses two make workers.
