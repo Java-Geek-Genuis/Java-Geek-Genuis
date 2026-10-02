@@ -75,3 +75,6 @@ Final CI toolchain setting: MSYS2 path-type is explicitly `inherit` so Visual St
 
 
 Absolute ARM32 cl.exe path is embedded into the generated VICE makefile so MSYS2 PATH mode cannot hide the compiler.
+
+
+Final CI pass uses a single branch-wide concurrency slot and an absolute Visual Studio ARM32 compiler path.
