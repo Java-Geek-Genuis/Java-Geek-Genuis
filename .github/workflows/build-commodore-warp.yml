@@ -6,13 +6,14 @@ on:
     branches:
       - commodore-warp-uwp
       - commodore-warp-package
+      - commodore-warp-release
     paths:
       - "CommodoreWarpUWP/**"
       - ".github/workflows/build-commodore-warp.yml"
   workflow_dispatch:
 
 concurrency:
-  group: commodore-warp-package
+  group: commodore-warp-release
   cancel-in-progress: true
 
 jobs:
@@ -36,45 +37,23 @@ jobs:
             make
           path-type: inherit
 
-      - name: Obtain VICE ARM32 C64 core
+      - name: Obtain official VICE ARM32 cores
         shell: pwsh
         working-directory: CommodoreWarpUWP
         run: |
           $dest = ".\ThirdParty\vice-libretro"
           New-Item -ItemType Directory -Force $dest | Out-Null
-          $zip = Join-Path $dest "vice_x64_libretro.dll.zip"
-          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x64_libretro.dll.zip"
-          $got = $false
-          try {
-            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
+          foreach ($core in @("x64","x128")) {
+            $zip = Join-Path $dest ("vice_" + $core + "_libretro.dll.zip")
+            $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_" + $core + "_libretro.dll.zip"
+            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 60
             Expand-Archive -Path $zip -DestinationPath $dest -Force
-            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x64_libretro.dll" -File | Select-Object -First 1
-            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x64_libretro.dll") -Force }
-          } catch {
-            Write-Host "Official buildbot ARM32 C64 core unavailable: $($_.Exception.Message)"
+            $dll = Get-ChildItem $dest -Recurse -Filter ("vice_" + $core + "_libretro.dll") -File | Select-Object -First 1
+            if (!$dll) { Write-Error ("Missing downloaded VICE ARM32 core: " + $core) }
+            Copy-Item $dll.FullName (Join-Path $dest $dll.Name) -Force
           }
-          if (!$got) { & .\build-vice-arm.ps1 -EmuType x64 }
 
-      - name: Obtain VICE ARM32 C128 core
-        shell: pwsh
-        working-directory: CommodoreWarpUWP
-        run: |
-          $dest = ".\ThirdParty\vice-libretro"
-          New-Item -ItemType Directory -Force $dest | Out-Null
-          $zip = Join-Path $dest "vice_x128_libretro.dll.zip"
-          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x128_libretro.dll.zip"
-          $got = $false
-          try {
-            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
-            Expand-Archive -Path $zip -DestinationPath $dest -Force
-            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x128_libretro.dll" -File | Select-Object -First 1
-            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x128_libretro.dll") -Force }
-          } catch {
-            Write-Host "Official buildbot ARM32 C128 core unavailable: $($_.Exception.Message)"
-          }
-          if (!$got) { & .\build-vice-arm.ps1 -EmuType x128 }
-
-      - name: Stage VICE cores
+      - name: Stage VICE cores/
         shell: pwsh
         working-directory: CommodoreWarpUWP
         run: |
