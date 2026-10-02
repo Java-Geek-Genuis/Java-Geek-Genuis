@@ -6,6 +6,13 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <wrl.h>
+#include <unknwn.h>
+
+struct __declspec(uuid("905A0FEF-BC53-11DF-8C49-001E4FC686DA")) ICommodoreBufferByteAccess : IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE Buffer(byte** value) = 0;
+};
 
 using namespace Platform;
 using namespace Windows::Storage;
@@ -175,6 +182,22 @@ void MainPage::Frame(Object^, Object^)
 
 void MainPage::Present()
 {
+    if (!bitmap || core->Width == 0 || core->Height == 0) return;
+
+    Microsoft::WRL::ComPtr<ICommodoreBufferByteAccess> access;
+    IInspectable* inspectable = reinterpret_cast<IInspectable*>(bitmap->PixelBuffer);
+    if (!inspectable) return;
+    if (FAILED(inspectable->QueryInterface(IID_PPV_ARGS(&access)))) return;
+
+    byte* destination = nullptr;
+    if (FAILED(access->Buffer(&destination)) || !destination) return;
+
+    auto source = core->GetFrameCopy();
+    unsigned bytes = core->Width * core->Height * 4;
+    if (source->Length < bytes) bytes = source->Length;
+    if (bytes) memcpy(destination, source->Data, bytes);
+
+    bitmap->Invalidate();
     ScreenImage->Source = bitmap;
 }
 
