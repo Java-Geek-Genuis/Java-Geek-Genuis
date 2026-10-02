@@ -93,3 +93,6 @@ Final emulator path: official Libretro ARM32 VICE cores are preferred; framebuff
 
 
 Build speed: VICE ARM32 source compilation uses two make workers.
+
+
+Test-package note: the Actions workflow uses preserved ARM32/MSVC VICE DLLs from the public RetroArch-ARM archive and verifies their PE architecture before AppX packaging.
