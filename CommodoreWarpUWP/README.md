@@ -102,3 +102,6 @@ Packaging fix: VICE C64/C128 DLLs are explicit DeploymentContent entries in the 
 
 
 Final test build: ARM32 AppX is signed on CI with a temporary CN=Java-Geek-Genuis certificate, and the public certificate is included for sideload testing.
+
+
+Final signed-package fix: CI finds signtool.exe from either Windows SDK install root, signs the ARM32 AppX, and exports the public test certificate.
