@@ -254,16 +254,17 @@ void MainPage::OnLoaded(Object^, RoutedEventArgs^)
     CpuText->Text = L"1.0 MHz";
     BuiltInList->SelectedIndex = 0;
     ProgramName->Text = L"STARTUP";
-    ProgramEditor->Text = L"10 PRINT CHR$(147)
-20 PRINT "COMMODORE WARP"
-30 PRINT "C64 CORE ONLINE"
-40 PRINT
-50 PRINT "OPEN PROGRAMS FOR TESTS"
-60 PRINT "AND BUILT-IN GAMES"
-70 PRINT
-80 PRINT "CPU SLIDER: 1-64X EFFECTIVE SPEED"
-90 PRINT "WARP BUTTON: 16X"
-100 END";
+    ProgramEditor->Text =
+        L"10 PRINT CHR$(147)\\n"
+        L"20 PRINT \"COMMODORE WARP\"\\n"
+        L"30 PRINT \"C64 CORE ONLINE\"\\n"
+        L"40 PRINT\\n"
+        L"50 PRINT \"OPEN PROGRAMS FOR TESTS\"\\n"
+        L"60 PRINT \"AND BUILT-IN GAMES\"\\n"
+        L"70 PRINT\\n"
+        L"80 PRINT \"CPU SLIDER: 1-64X EFFECTIVE SPEED\"\\n"
+        L"90 PRINT \"WARP BUTTON: 16X\"\\n"
+        L"100 END";
     StatusText->Text = L"Booting C64...";
 
     auto values = ApplicationData::Current->LocalSettings->Values;
