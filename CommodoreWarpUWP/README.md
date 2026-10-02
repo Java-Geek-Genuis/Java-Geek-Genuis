@@ -48,3 +48,6 @@ Only use software, disk images, and ROM material you are legally entitled to use
 Packaging branch trigger.
 
 CI package definition updated.
+
+
+XAML dependent metadata fixed for ARM32 packaging.
