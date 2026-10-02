@@ -124,7 +124,7 @@ $make = (Get-Command make.exe -ErrorAction SilentlyContinue).Source
 if (!$make) { $make = "C:\msys64\usr\bin\make.exe" }
 if (!(Test-Path $make)) { throw "MSYS2 make.exe was not found." }
 
-$cmd = 'call "' + $vcvars + '" x64_arm && set "PATH=C:\msys64\usr\bin;%PATH%" && "' + $make + '" -f Makefile.uwp.arm32 clean && "' + $make + '" -f Makefile.uwp.arm32 EMUTYPE=' + $EmuType + ' platform=windows_msvc2017_uwp_arm'
+$cmd = 'call "' + $vcvars + '" x64_arm && set "PATH=C:\msys64\usr\bin;%PATH%" && "' + $make + '" -f Makefile.uwp.arm32 clean && "' + $make + '" -f Makefile.uwp.arm32 -j2 EMUTYPE=' + $EmuType + ' platform=windows_msvc2017_uwp_arm'
 cmd.exe /d /s /c $cmd
 if ($LASTEXITCODE -ne 0) { throw "VICE ARM32 build failed for $EmuType." }
 
