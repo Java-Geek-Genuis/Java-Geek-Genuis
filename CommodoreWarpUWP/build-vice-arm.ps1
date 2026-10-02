@@ -82,6 +82,18 @@ $makefile = $makefile.Replace(
     '$(CXX) $(CXXFLAGS) -c $(OBJOUT)$@ $<'
 )
 
+# Resolve the ARM32 compiler while inside the Visual Studio developer environment
+$clPath = (& cmd.exe /d /s /c ('call "' + $vcvars + '" x64_arm && where cl.exe')) | Select-Object -Last 1
+$clPath = [string]$clPath
+if ([string]::IsNullOrWhiteSpace($clPath)) { throw "Could not resolve ARM32 cl.exe from Visual Studio." }
+$clPath = $clPath.Trim()
+$clPathMake = $clPath.Replace("\","/")
+# A quoted absolute Windows path is executable from the MSYS2 POSIX shell even
+# when the Windows PATH is deliberately minimal.
+$makefile = $makefile.Replace("CC = cl.exe", 'CC = "' + $clPathMake + '"')
+$makefile = $makefile.Replace("CXX = cl.exe", 'CXX = "' + $clPathMake + '"')
+$makefile = $makefile.Replace("LD = cl.exe", 'LD = "' + $clPathMake + '"')
+
 Set-Content ".\Makefile.uwp.arm32" $makefile -Encoding UTF8
 
 # Print the key generated section for build diagnostics.
