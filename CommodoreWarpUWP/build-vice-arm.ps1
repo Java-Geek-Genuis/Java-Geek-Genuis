@@ -38,7 +38,7 @@ else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     WinPartition = uwp
     TargetArchMoniker = arm
     TARGET := $(TARGET_NAME)_libretro.dll
-    MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS -FImsvc_compat.h
+    MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -DNOMINMAX -EHsc -FS -FImsvc_compat.h
     CFLAGS += $(MSVC2017CompileFlags)
     CXXFLAGS += $(MSVC2017CompileFlags)
     CFLAGS += -D__WIN32__ -D_ARM_ -D_M_ARM=7
