@@ -253,13 +253,66 @@ void MainPage::OnLoaded(Object^, RoutedEventArgs^)
     CpuSlider->Value = 1;
     CpuText->Text = L"1.0 MHz";
     BuiltInList->SelectedIndex = 0;
-    StatusText->Text = L"Ready. C64 is the default. Open PROGRAMS for tests and games.";
+    ProgramName->Text = L"STARTUP";
+    ProgramEditor->Text = L"10 PRINT CHR$(147)
+20 PRINT "COMMODORE WARP"
+30 PRINT "C64 CORE ONLINE"
+40 PRINT
+50 PRINT "OPEN PROGRAMS FOR TESTS"
+60 PRINT "AND BUILT-IN GAMES"
+70 PRINT
+80 PRINT "CPU SLIDER: 1-64X EFFECTIVE SPEED"
+90 PRINT "WARP BUTTON: 16X"
+100 END";
+    StatusText->Text = L"Booting C64...";
 
     auto values = ApplicationData::Current->LocalSettings->Values;
     if (values->HasKey(L"SdConsent") && safe_cast<bool>(values->Lookup(L"SdConsent")))
         PrepareSdFolder();
     else
         SdText->Text = L"SD workspace: not enabled.";
+
+    auto bytes = BuildPrg();
+    create_task(ApplicationData::Current->LocalFolder->CreateFileAsync(
+        L"startup.prg", CreationCollisionOption::ReplaceExisting))
+    .then([this, bytes](StorageFile^ file)
+    {
+        return create_task(FileIO::WriteBytesAsync(file, bytes));
+    })
+    .then([this](void)
+    {
+        running = false;
+        core->Unload();
+        bitmap = nullptr;
+
+        if (!core->LoadCore(CorePath()))
+        {
+            StatusText->Text = L"BOOT ERROR: " + core->Error;
+            return;
+        }
+
+        auto path = ApplicationData::Current->LocalFolder->Path + L"\\startup.prg";
+        if (!core->LoadGame(path))
+        {
+            StatusText->Text = L"BOOT ERROR: " + core->Error;
+            return;
+        }
+
+        bitmap = ref new WriteableBitmap(core->Width, core->Height);
+        accumulator = 0;
+        running = true;
+        StatusText->Text = L"C64 ready. Startup program running.";
+        core->RunFrames(2);
+        Present();
+    })
+    .then([](task<void> t)
+    {
+        try { t.get(); }
+        catch (Exception^ ex)
+        {
+            if (ex) {}
+        }
+    });
 }
 
 void MainPage::Machine_Toggled(Object^ sender, RoutedEventArgs^)
