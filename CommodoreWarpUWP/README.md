@@ -69,3 +69,6 @@ CI toolchain fix: MSYS2 inherits the Visual Studio ARM32 environment so VICE can
 
 
 Verified CI revision: MSYS2 inherits the Visual Studio ARM32 environment before VICE compilation.
+
+
+Final CI toolchain setting: MSYS2 path-type is explicitly `inherit` so Visual Studio ARM32 cl.exe is visible to GNU make.
