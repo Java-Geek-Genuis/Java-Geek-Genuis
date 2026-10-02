@@ -20,9 +20,8 @@ git checkout --detach $pin
 
 $makefile = Get-Content ".\Makefile" -Raw
 
-# Add a complete MSVC/UWP ARM32 platform branch to the existing VICE
-# platform-selection chain.  Do not touch the surrounding else/endif
-# structure except for inserting this single branch.
+# Add a real Windows UWP ARM32/MSVC branch to the existing VICE platform
+# selection chain.  It deliberately does NOT close the outer if/else chain.
 if ($makefile -notmatch "CommodoreWarpUWP ARM32 MSVC") {
     $uwpBlock = @'
 # CommodoreWarpUWP ARM32 MSVC
@@ -31,11 +30,15 @@ else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     WINDOWS_VERSION = 1
     WinPartition = uwp
     TargetArchMoniker = arm
+    TARGET := $(TARGET_NAME)_libretro.dll
     MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS
     CFLAGS += $(MSVC2017CompileFlags)
     CXXFLAGS += $(MSVC2017CompileFlags)
     CFLAGS += -D__WIN32__
     CXXFLAGS += -D__WIN32__
+    COMMONFLAGS += -DNEED_STRCASESTR
+    LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -OPT:REF -SUBSYSTEM:CONSOLE -MANIFESTUAC:NO -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO
+    LDFLAGS += WindowsApp.lib
     CXX = cl.exe
     CC = cl.exe
     LD = cl.exe
@@ -44,8 +47,7 @@ else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     $makefile = $makefile.Replace("# Wincross64", $uwpBlock + [Environment]::NewLine + "# Wincross64")
 }
 
-# Remove GCC-only command-line switches after the whole makefile has been
-# assembled.  filter-out is safe because these are individual make words.
+# Apply MSVC cleanup only after the complete flag set has been assembled.
 $compat = @'
 # CommodoreWarpUWP MSVC output/flag compatibility
 ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
@@ -63,10 +65,10 @@ else
 endif
 '@
 if ($makefile -notmatch "CommodoreWarpUWP MSVC output/flag compatibility") {
-    $makefile = $makefile.Replace("# webOS", $compat + [Environment]::NewLine + "# webOS")
+    $makefile = $makefile.Replace("default: info all", $compat + [Environment]::NewLine + "default: info all")
 }
 
-# Keep all recipes unconditional.  Only the output switches vary by platform.
+# Keep all make recipes unconditional; only output switches vary by platform.
 $makefile = $makefile.Replace(
     '$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)',
     '$(CXX) $(LD_EXTRA) $(LINKOUT)$@ $(OBJECTS) $(LDFLAGS)'
@@ -82,12 +84,11 @@ $makefile = $makefile.Replace(
 
 Set-Content ".\Makefile.uwp.arm32" $makefile -Encoding UTF8
 
-# Show the generated makefile area around the custom platform so a failed
-# build has useful diagnostics in Actions logs.
+# Print the key generated section for build diagnostics.
 $lineNumber = 0
 Get-Content ".\Makefile.uwp.arm32" | ForEach-Object {
     $lineNumber++
-    if ($lineNumber -ge 75 -and $lineNumber -le 125) {
+    if ($lineNumber -ge 55 -and $lineNumber -le 90) {
         "{0,4}: {1}" -f $lineNumber, $_
     }
 }
