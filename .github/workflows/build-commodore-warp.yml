@@ -58,6 +58,31 @@ jobs:
         run: |
           msbuild CommodoreWarpUWP.sln /m:1 /t:Rebuild /p:Configuration=Release /p:Platform=ARM /v:minimal
 
+      - name: Sign ARM32 AppX for sideload testing
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        run: |
+          $pkg = Get-ChildItem .\AppPackages -Recurse -Filter "CommodoreWarpUWP_*_ARM.appx" -File | Select-Object -First 1
+          if (!$pkg) { throw "ARM32 AppX not found." }
+
+          $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Java-Geek-Genuis" -FriendlyName "Commodore Warp Test Certificate" -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -KeyExportPolicy NonExportable -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(3) -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3")
+          $cer = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
+          Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+
+          $signtool = Get-ChildItem "$env:ProgramFiles(x86)\Windows Kits\10\bin" -Recurse -Filter signtool.exe -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "\\x64\\signtool\.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if (!$signtool) { throw "signtool.exe not found." }
+
+          & $signtool.FullName sign /fd SHA256 /a /n "Java-Geek-Genuis" $pkg.FullName
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed." }
+
+          $z = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          $hasSig = $z.Entries.FullName -contains "AppxSignature.p7x"
+          $z.Dispose()
+          if (!$hasSig) { throw "Signed AppX does not contain AppxSignature.p7x." }
+
       - name: Collect MSBuild-generated ARM32 appx
         shell: pwsh
         run: |
@@ -78,8 +103,8 @@ jobs:
 
           Copy-Item $pkg.FullName (Join-Path $out "CommodoreWarp_ARM32.appx") -Force
 
-          $cert = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\AppPackages") -Recurse -Filter "*.cer" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($cert) { Copy-Item $cert.FullName (Join-Path $out $cert.Name) -Force }
+          $cert = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
+          if (Test-Path $cert) { Copy-Item $cert (Join-Path $out "CommodoreWarp_Test.cer") -Force }
 
       - name: Verify package
         shell: pwsh
