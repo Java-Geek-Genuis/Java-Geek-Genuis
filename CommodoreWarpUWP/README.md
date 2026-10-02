@@ -72,3 +72,6 @@ Verified CI revision: MSYS2 inherits the Visual Studio ARM32 environment before 
 
 
 Final CI toolchain setting: MSYS2 path-type is explicitly `inherit` so Visual Studio ARM32 cl.exe is visible to GNU make.
+
+
+Absolute ARM32 cl.exe path is embedded into the generated VICE makefile so MSYS2 PATH mode cannot hide the compiler.
