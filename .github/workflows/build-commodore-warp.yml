@@ -53,3 +53,10 @@ jobs:
           if (!(Test-Path $pkg)) { Write-Error 'Package missing.' }
           Get-Item $pkg | Select-Object FullName,Length
 
+
+      - name: Upload ARM32 appx
+        uses: actions/upload-artifact@v4
+        with:
+          name: Commodore-Warp-ARM32-appx
+          path: artifacts/*
+          if-no-files-found: error
