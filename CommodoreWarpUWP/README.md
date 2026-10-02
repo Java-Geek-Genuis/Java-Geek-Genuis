@@ -66,3 +66,6 @@ VICE ARM32 builder now defines the DLL target and applies MSVC flag filtering af
 
 
 CI toolchain fix: MSYS2 inherits the Visual Studio ARM32 environment so VICE can invoke cl.exe.
+
+
+Verified CI revision: MSYS2 inherits the Visual Studio ARM32 environment before VICE compilation.
