@@ -28,6 +28,13 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            make
+
       - name: Build VICE ARM32 C64 core
         shell: pwsh
         working-directory: CommodoreWarpUWP
