@@ -66,17 +66,17 @@ jobs:
         shell: pwsh
         run: |
           $candidates = @(
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.17763.0\x64\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.26100.0\x86\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x86\signtool.exe",
-            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe"
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.17763.0\x64\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.26100.0\x86\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x86\signtool.exe",
+            "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe"
           )
           $signtool = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (!$signtool) {
-            $searchRoots = @("$env:ProgramFiles(x86)\Windows Kits\10\bin", "$env:ProgramFiles\Windows Kits\10\bin")
+            $searchRoots = @("${env:ProgramFiles(x86)}\Windows Kits\10\bin", "$env:ProgramFiles\Windows Kits\10\bin")
             foreach ($root in $searchRoots) {
               if (Test-Path $root) {
                 $found = cmd /c "dir /s /b `"$root\signtool.exe`" 2>nul"
@@ -86,7 +86,7 @@ jobs:
           }
           if (!$signtool) {
             Write-Host "Installed Windows SDK directories:"
-            Get-ChildItem "$env:ProgramFiles(x86)\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue | Select-Object FullName
+            Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue | Select-Object FullName
             throw "signtool.exe was not found in any installed Windows SDK path."
           }
           Write-Host "Using SignTool: $signtool"
