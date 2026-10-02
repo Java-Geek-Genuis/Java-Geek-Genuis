@@ -78,3 +78,6 @@ Absolute ARM32 cl.exe path is embedded into the generated VICE makefile so MSYS2
 
 
 Final CI pass uses a single branch-wide concurrency slot and an absolute Visual Studio ARM32 compiler path.
+
+
+ARM32 VICE compatibility now forces Hostx64\arm\cl.exe and pre-includes msvc_compat.h for GCC builtin compatibility.
