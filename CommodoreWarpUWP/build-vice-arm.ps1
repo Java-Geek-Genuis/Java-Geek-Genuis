@@ -15,6 +15,13 @@ if (!(Test-Path (Join-Path $third "Makefile"))) {
 }
 
 Set-Location $third
+
+$vcvars = Join-Path "$env:ProgramFiles" "Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
+if (!(Test-Path $vcvars)) {
+    $vcvars = Join-Path "$env:ProgramFiles(x86)" "Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
+}
+if (!(Test-Path $vcvars)) { throw "Visual Studio vcvarsall.bat was not found." }
+
 git fetch --depth 1 origin $pin
 git checkout --detach $pin
 
@@ -88,12 +95,9 @@ $clPath = [string]$clPath
 if ([string]::IsNullOrWhiteSpace($clPath)) { throw "Could not resolve ARM32 cl.exe from Visual Studio." }
 $clPath = $clPath.Trim()
 $clPathMake = $clPath.Replace("\","/")
-# A quoted absolute Windows path is executable from the MSYS2 POSIX shell even
-# when the Windows PATH is deliberately minimal.
 $makefile = $makefile.Replace("CC = cl.exe", 'CC = "' + $clPathMake + '"')
 $makefile = $makefile.Replace("CXX = cl.exe", 'CXX = "' + $clPathMake + '"')
 $makefile = $makefile.Replace("LD = cl.exe", 'LD = "' + $clPathMake + '"')
-
 Set-Content ".\Makefile.uwp.arm32" $makefile -Encoding UTF8
 
 # Print the key generated section for build diagnostics.
