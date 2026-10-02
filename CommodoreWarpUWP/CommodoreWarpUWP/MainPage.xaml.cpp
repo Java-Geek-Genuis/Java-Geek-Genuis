@@ -59,6 +59,175 @@ static std::string Upper(const std::string& input)
     return out;
 }
 
+struct BuiltInProgram
+{
+    const char* name;
+    const char* source;
+};
+
+static const BuiltInProgram kBuiltIns[] =
+{
+    { "HELLO", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "COMMODORE WARP BASIC TEST"
+30 PRINT "TYPE WITH THE PHONE KEYBOARD!"
+40 PRINT
+50 PRINT "1. RUN A BUILT-IN TEST"
+60 PRINT "2. EDIT ME IN PROGRAM LAB"
+70 PRINT
+80 FOR I=1 TO 5
+90 PRINT "WARP SPEED:";I;"X DEMO"
+100 NEXT I
+110 PRINT
+120 PRINT "PRESS A KEY TO SEE INPUT."
+130 GET A$
+140 IF A$="" THEN GOTO 130
+150 PRINT
+160 PRINT "YOU PRESSED [";A$;"]"
+170 END)BASIC" },
+
+    { "COLORTEST", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "16-COLOR DISPLAY TEST"
+30 PRINT "WATCH THE BORDER AND BACKGROUND"
+40 FOR I=0 TO 15
+50 POKE 53280,I
+60 POKE 53281,15-I
+70 PRINT CHR$(19);"COLOR ";I;" OF 15"
+80 FOR D=1 TO 120
+90 NEXT D
+100 NEXT I
+110 PRINT CHR$(19);"COLOR TEST COMPLETE"
+120 END)BASIC" },
+
+    { "MEMTEST", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "SCREEN MEMORY TEST"
+30 PRINT "WRITING 1000 PATTERN VALUES..."
+40 E=0
+50 P=0
+60 FOR I=0 TO 999
+70 POKE 1024+I,P
+80 IF PEEK(1024+I)<>P THEN E=E+1
+90 P=P+1
+100 IF P=256 THEN P=0
+110 NEXT I
+120 PRINT CHR$(19);"MEMORY TEST COMPLETE"
+130 PRINT "ERRORS:";E
+140 END)BASIC" },
+
+    { "CPUBENCH", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "CPU / WARP BENCHMARK"
+30 PRINT "RUNNING 10000 INTEGER OPERATIONS..."
+40 T=TI
+50 A=0
+60 FOR I=1 TO 10000
+70 A=A+I
+80 B=I*I
+90 NEXT I
+100 PRINT "DONE."
+110 PRINT "JIFFIES:";TI-T
+120 PRINT "RESULT:";A
+130 PRINT "TRY DIFFERENT CPU SPEEDS."
+140 END)BASIC" },
+
+    { "NUMBERCRUNCH", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "NUMBER CRUNCHER"
+30 PRINT "I PICK A NUMBER FROM 1 TO 100"
+40 X=INT(RND(1)*100)+1
+50 N=0
+60 INPUT "YOUR GUESS";G
+70 N=N+1
+80 IF G<X THEN PRINT "HIGHER!":GOTO 60
+90 IF G>X THEN PRINT "LOWER!":GOTO 60
+100 PRINT "YOU GOT IT IN";N;"TRIES!"
+110 INPUT "PLAY AGAIN (Y/N)";A$
+120 IF A$="Y" THEN GOTO 10
+130 END)BASIC" },
+
+    { "MATHBLITZ", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "MATH BLITZ"
+30 PRINT "ANSWER 8 QUICK QUESTIONS"
+40 Q=0
+50 S=0
+60 Q=Q+1
+70 A=INT(RND(1)*9)+1
+80 B=INT(RND(1)*9)+1
+90 C=A+B
+100 PRINT
+110 INPUT "ANSWER ";G
+120 IF G=C THEN PRINT "CORRECT!":S=S+1:GOTO 140
+130 PRINT "NOPE. ANSWER WAS";C
+140 IF Q<8 THEN GOTO 60
+150 PRINT
+160 PRINT "SCORE";S;"OUT OF 8"
+170 INPUT "PLAY AGAIN (Y/N)";A$
+180 IF A$="Y" THEN GOTO 10
+190 END)BASIC" },
+
+    { "TREASURE", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "TREASURE HUNT"
+30 PRINT "FIND THE TREASURE ON AN 8X8 MAP"
+40 X=INT(RND(1)*8)+1
+50 Y=INT(RND(1)*8)+1
+60 FOR T=1 TO 8
+70 INPUT "X COORDINATE 1-8";G
+80 INPUT "Y COORDINATE 1-8";H
+90 IF G=X AND H=Y THEN GOTO 150
+100 D=ABS(G-X)+ABS(H-Y)
+110 PRINT "DISTANCE:";D
+120 IF G<X THEN PRINT "GO EAST"
+130 IF G>X THEN PRINT "GO WEST"
+140 IF H<Y THEN PRINT "GO SOUTH"
+145 IF H>Y THEN PRINT "GO NORTH"
+146 NEXT T
+147 PRINT "OUT OF MOVES!"
+148 GOTO 170
+150 PRINT
+155 PRINT "TREASURE FOUND IN";T;"MOVES!"
+160 PRINT "YOU WIN!"
+170 INPUT "PLAY AGAIN (Y/N)";A$
+180 IF A$="Y" THEN GOTO 10
+190 END)BASIC" },
+
+    { "TYPINGDASH", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "TYPING DASH"
+30 PRINT "TYPE THE WORD I GIVE YOU"
+40 R=INT(RND(1)*5)+1
+50 IF R=1 THEN W$="COMMODORE"
+60 IF R=2 THEN W$="WARP"
+70 IF R=3 THEN W$="LUMIA"
+80 IF R=4 THEN W$="BASIC"
+90 IF R=5 THEN W$="PIXEL"
+100 PRINT
+110 PRINT "TYPE: ";W$
+120 T=TI
+130 INPUT "GO";A$
+140 E=TI-T
+150 IF A$=W$ THEN PRINT "NICE! TIME:";E;"JIFFIES":GOTO 170
+160 PRINT "MISS! THE WORD WAS ";W$
+170 INPUT "PLAY AGAIN (Y/N)";B$
+180 IF B$="Y" THEN GOTO 10
+190 END)BASIC" },
+
+    { "LETTERHUNT", R"BASIC(10 PRINT CHR$(147)
+20 PRINT "LETTER HUNT"
+30 PRINT "I WILL PICK A LETTER FROM A TO Z"
+40 R=INT(RND(1)*26)+65
+50 PRINT "FIND IT!"
+60 INPUT "YOUR LETTER";A$
+70 IF A$="" THEN GOTO 60
+80 IF ASC(A$)=R THEN GOTO 120
+90 IF ASC(A$)<R THEN PRINT "LATER IN THE ALPHABET!":GOTO 60
+100 IF ASC(A$)>R THEN PRINT "EARLIER IN THE ALPHABET!":GOTO 60
+120 PRINT "CORRECT: ";CHR$(R)
+130 INPUT "PLAY AGAIN (Y/N)";B$
+140 IF B$="Y" THEN GOTO 10
+150 END)BASIC" }
+};
+
+static int BuiltInCount()
+{
+    return static_cast<int>(sizeof(kBuiltIns) / sizeof(kBuiltIns[0]));
+}
+
 MainPage::MainPage()
     : core(ref new LibretroCore()), bitmap(nullptr), sdFolder(nullptr),
       accumulator(0), c128(false), warpHeld(false), running(false)
@@ -83,7 +252,8 @@ void MainPage::OnLoaded(Object^, RoutedEventArgs^)
     }
     CpuSlider->Value = 1;
     CpuText->Text = L"1.0 MHz";
-    StatusText->Text = L"Ready. C64 is the default.";
+    BuiltInList->SelectedIndex = 0;
+    StatusText->Text = L"Ready. C64 is the default. Open PROGRAMS for tests and games.";
 
     auto values = ApplicationData::Current->LocalSettings->Values;
     if (values->HasKey(L"SdConsent") && safe_cast<bool>(values->Lookup(L"SdConsent")))
@@ -314,6 +484,24 @@ void MainPage::LoadBasic_Click(Object^, RoutedEventArgs^)
         })
         .then([](task<void> t) { try { t.get(); } catch (Exception^) {} });
     });
+}
+
+void MainPage::LoadBuiltIn_Click(Object^, RoutedEventArgs^)
+{
+    int index = BuiltInList ? BuiltInList->SelectedIndex : -1;
+    if (index < 0 || index >= BuiltInCount())
+    {
+        StatusText->Text = L"Select a built-in program first.";
+        return;
+    }
+
+    ProgramName->Text = ToPlatformString(kBuiltIns[index].name);
+    ProgramEditor->Text = ToPlatformString(kBuiltIns[index].source);
+    ProgramPanel->Visibility = Windows::UI::Xaml::Visibility::Visible;
+
+    String^ kind = index < 4 ? L"test program" : L"free built-in game";
+    StatusText->Text = L"Loaded built-in " + ToPlatformString(kBuiltIns[index].name) + L" (" + kind + L"). Press RUN BASIC.";
+    ProgramEditor->Focus(Windows::UI::Xaml::FocusState::Programmatic);
 }
 
 void MainPage::RunProgram_Click(Object^, RoutedEventArgs^)

@@ -1,10 +1,5 @@
 name: Build Commodore Warp ARM32 appx
-# Testable ARM32 package pipeline
-#
-# The current VICE libretro source no longer exposes the legacy UWP/MSVC
-# build target. For a testable Windows Phone package, use the preserved
-# ARM32/MSVC VICE binaries from the public RetroArch-ARM core archive.
-
+# Signed test package for Windows 10 Mobile / UWP ARM32.
 on:
   push:
     branches:
@@ -16,7 +11,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: commodore-warp-package-\${{ github.sha }}
+  group: commodore-warp-package-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -37,11 +32,9 @@ jobs:
         working-directory: CommodoreWarpUWP
         run: |
           New-Item -ItemType Directory -Force .\CommodoreWarpUWP\Cores | Out-Null
-
           $base = "https://raw.githubusercontent.com/basharast/RetroArch-ARM/894812d2f8a9435ef77e9ae6bc57e303eb45aa32/cores/msvc-cores"
           Invoke-WebRequest "$base/vice_x64_libretro.dll" -OutFile .\CommodoreWarpUWP\Cores\vice_x64_libretro.dll
           Invoke-WebRequest "$base/vice_x128_libretro.dll" -OutFile .\CommodoreWarpUWP\Cores\vice_x128_libretro.dll
-
           foreach ($f in @(".\CommodoreWarpUWP\Cores\vice_x64_libretro.dll", ".\CommodoreWarpUWP\Cores\vice_x128_libretro.dll")) {
             if (!(Test-Path $f)) { throw "Missing VICE core: $f" }
             $b = [System.IO.File]::ReadAllBytes((Resolve-Path $f))
@@ -56,77 +49,111 @@ jobs:
         shell: pwsh
         working-directory: CommodoreWarpUWP
         run: |
-          msbuild CommodoreWarpUWP.sln /m:1 /t:Rebuild /p:Configuration=Release /p:Platform=ARM /v:minimal
+          msbuild CommodoreWarpUWP.sln /m:1 /t:Rebuild /p:Configuration=Release /p:Platform=ARM /p:AppxPackageSigningEnabled=false /v:minimal
 
-      - name: Sign ARM32 AppX for sideload testing
+      - name: Create test signing certificate
         shell: pwsh
         working-directory: CommodoreWarpUWP
+        run: |
+          $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Java-Geek-Genuis" -FriendlyName "Commodore Warp Test Certificate" -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -KeyExportPolicy NonExportable -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(3) -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3")
+          $cer = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
+          Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+          if (!(Test-Path $cer)) { throw "Test certificate export failed." }
+          Write-Host "Created $cer"
+
+      - name: Locate SignTool
+        id: signtool
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.17763.0\x64\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.26100.0\x86\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.22621.0\x86\signtool.exe",
+            "$env:ProgramFiles(x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe"
+          )
+          $signtool = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (!$signtool) {
+            $searchRoots = @("$env:ProgramFiles(x86)\Windows Kits\10\bin", "$env:ProgramFiles\Windows Kits\10\bin")
+            foreach ($root in $searchRoots) {
+              if (Test-Path $root) {
+                $found = cmd /c "dir /s /b `"$root\signtool.exe`" 2>nul"
+                if ($found) { $signtool = ($found | Select-Object -First 1); break }
+              }
+            }
+          }
+          if (!$signtool) {
+            Write-Host "Installed Windows SDK directories:"
+            Get-ChildItem "$env:ProgramFiles(x86)\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue | Select-Object FullName
+            throw "signtool.exe was not found in any installed Windows SDK path."
+          }
+          Write-Host "Using SignTool: $signtool"
+          "path=$signtool" >> $env:GITHUB_OUTPUT
+
+      - name: Sign ARM32 AppX
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        env:
+          SIGNTOOL: ${{ steps.signtool.outputs.path }}
         run: |
           $pkg = Get-ChildItem .\AppPackages -Recurse -Filter "CommodoreWarpUWP_*_ARM.appx" -File | Select-Object -First 1
           if (!$pkg) { throw "ARM32 AppX not found." }
 
-          $cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Java-Geek-Genuis" -FriendlyName "Commodore Warp Test Certificate" -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 -KeyExportPolicy NonExportable -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(3) -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3")
-          $cer = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
-          Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+          $cert = Get-Item "$env:GITHUB_WORKSPACE\CommodoreWarpUWP\CommodoreWarp_Test.cer"
+          $private = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq "CN=Java-Geek-Genuis" -and $_.HasPrivateKey } | Select-Object -First 1
+          if (!$private) { throw "Private test certificate not found." }
 
-          $roots = @(
-            "$env:ProgramFiles(x86)\Windows Kits\10",
-            "$env:ProgramFiles\Windows Kits\10",
-            "$env:ProgramFiles(x86)\Microsoft SDKs\Windows",
-            "$env:ProgramFiles\Microsoft SDKs\Windows"
-          )
-          $signtool = Get-ChildItem $roots -Recurse -Filter signtool.exe -File -ErrorAction SilentlyContinue |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1
-          if (!$signtool) { throw "signtool.exe not found." }
-
-          & $signtool.FullName sign /fd SHA256 /a /n "Java-Geek-Genuis" $pkg.FullName
-          if ($LASTEXITCODE -ne 0) { throw "signtool failed." }
+          & $env:SIGNTOOL sign /fd SHA256 /sha1 $private.Thumbprint $pkg.FullName
+          if ($LASTEXITCODE -ne 0) { throw "SignTool failed with exit code $LASTEXITCODE." }
 
           $z = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
           $hasSig = $z.Entries.FullName -contains "AppxSignature.p7x"
           $z.Dispose()
           if (!$hasSig) { throw "Signed AppX does not contain AppxSignature.p7x." }
 
-      - name: Collect MSBuild-generated ARM32 appx
+          Write-Host "Signed $($pkg.Name) with $($private.Thumbprint)."
+          Write-Host "Certificate: $($cert.FullName)"
+
+      - name: Collect signed ARM32 appx + certificate
         shell: pwsh
         run: |
           $out = Join-Path $env:GITHUB_WORKSPACE "artifacts"
           Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force $out | Out-Null
-
-          $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\AppPackages") -Recurse -Filter "CommodoreWarpUWP_*_ARM.appx" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (!$pkg) { Write-Error "MSBuild did not generate an ARM32 .appx package." }
+          $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\AppPackages") -Recurse -Filter "CommodoreWarpUWP_*_ARM.appx" -File | Select-Object -First 1
+          if (!$pkg) { throw "MSBuild did not generate an ARM32 .appx package." }
 
           $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
           $names = @($zip.Entries.FullName)
           $zip.Dispose()
-
           if ($names -notcontains "Cores/vice_x64_libretro.dll" -or $names -notcontains "Cores/vice_x128_libretro.dll") {
-            Write-Error "ARM32 VICE core DLLs are missing from AppX."
+            throw "ARM32 VICE core DLLs are missing from AppX."
+          }
+          if ($names -notcontains "AppxSignature.p7x") {
+            throw "AppX is not signed."
           }
 
-          Copy-Item $pkg.FullName (Join-Path $out "CommodoreWarp_ARM32.appx") -Force
-
-          $cert = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
-          if (Test-Path $cert) { Copy-Item $cert (Join-Path $out "CommodoreWarp_Test.cer") -Force }
+          Copy-Item $pkg.FullName (Join-Path $out "CommodoreWarp_ARM32_SIGNED.appx") -Force
+          Copy-Item (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer") (Join-Path $out "CommodoreWarp_Test.cer") -Force
 
       - name: Verify package
         shell: pwsh
         run: |
-          $pkg = Join-Path $env:GITHUB_WORKSPACE "artifacts\CommodoreWarp_ARM32.appx"
-          if (!(Test-Path $pkg)) { Write-Error "Package missing." }
-          Get-Item $pkg | Select-Object FullName,Length
-          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg)
-          $entries = $zip.Entries.FullName
-          $zip.Dispose()
-          "Cores/vice_x64_libretro.dll","Cores/vice_x128_libretro.dll","Assets/logo.png","AppxManifest.xml" | ForEach-Object {
-            if ($entries -notcontains $_) { Write-Error "Missing package entry: $_" }
+          $pkg = Join-Path $env:GITHUB_WORKSPACE "artifacts\CommodoreWarp_ARM32_SIGNED.appx"
+          if (!(Test-Path $pkg)) { throw "Package missing." }
+          $z = [System.IO.Compression.ZipFile]::OpenRead($pkg)
+          $entries = @($z.Entries.FullName)
+          $z.Dispose()
+          "Cores/vice_x64_libretro.dll","Cores/vice_x128_libretro.dll","Assets/logo.png","AppxManifest.xml","AppxSignature.p7x" | ForEach-Object {
+            if ($entries -notcontains $_) { throw "Missing package entry: $_" }
           }
+          Get-Item $pkg | Select-Object FullName,Length
 
-      - name: Upload ARM32 appx
+      - name: Upload signed ARM32 package
         uses: actions/upload-artifact@v4
         with:
-          name: Commodore-Warp-ARM32-appx
+          name: Commodore-Warp-ARM32-SIGNED
           path: artifacts/*
           if-no-files-found: error
