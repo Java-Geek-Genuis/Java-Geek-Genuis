@@ -38,7 +38,7 @@ else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     WinPartition = uwp
     TargetArchMoniker = arm
     TARGET := $(TARGET_NAME)_libretro.dll
-    MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS
+    MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS -FImsvc_compat.h
     CFLAGS += $(MSVC2017CompileFlags)
     CXXFLAGS += $(MSVC2017CompileFlags)
     CFLAGS += -D__WIN32__
@@ -90,14 +90,25 @@ $makefile = $makefile.Replace(
 )
 
 # Resolve the ARM32 compiler while inside the Visual Studio developer environment
-$clPath = (& cmd.exe /d /s /c ('call "' + $vcvars + '" x64_arm && where cl.exe')) | Select-Object -Last 1
-$clPath = [string]$clPath
-if ([string]::IsNullOrWhiteSpace($clPath)) { throw "Could not resolve ARM32 cl.exe from Visual Studio." }
-$clPath = $clPath.Trim()
+$clCandidates = Get-ChildItem -Path (Join-Path "$env:ProgramFiles" "Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC") -Recurse -Filter "cl.exe" -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match "\\bin\\Hostx64\\arm\\cl\.exe$" } | Sort-Object FullName
+if (!$clCandidates -or $clCandidates.Count -eq 0) { throw "Could not find the Visual Studio ARM32 cl.exe." }
+$clPath = $clCandidates[-1].FullName.Trim()
 $clPathMake = $clPath.Replace("\","/")
 $makefile = $makefile.Replace("CC = cl.exe", 'CC = "' + $clPathMake + '"')
 $makefile = $makefile.Replace("CXX = cl.exe", 'CXX = "' + $clPathMake + '"')
 $makefile = $makefile.Replace("LD = cl.exe", 'LD = "' + $clPathMake + '"')
+@'
+#pragma once
+#ifdef _MSC_VER
+#ifndef __builtin_expect
+#define __builtin_expect(x,y) (x)
+#endif
+#ifndef __builtin_expect_with_probability
+#define __builtin_expect_with_probability(x,y,p) (x)
+#endif
+#endif
+'@ | Set-Content ".\msvc_compat.h" -Encoding UTF8
+
 Set-Content ".\Makefile.uwp.arm32" $makefile -Encoding UTF8
 
 # Print the key generated section for build diagnostics.
