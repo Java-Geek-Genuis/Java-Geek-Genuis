@@ -36,15 +36,43 @@ jobs:
             make
           path-type: inherit
 
-      - name: Build VICE ARM32 C64 core
+      - name: Obtain VICE ARM32 C64 core
         shell: pwsh
         working-directory: CommodoreWarpUWP
-        run: .\build-vice-arm.ps1 -EmuType x64
+        run: |
+          $dest = ".\ThirdParty\vice-libretro"
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          $zip = Join-Path $dest "vice_x64_libretro.dll.zip"
+          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x64_libretro.dll.zip"
+          $got = $false
+          try {
+            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
+            Expand-Archive -Path $zip -DestinationPath $dest -Force
+            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x64_libretro.dll" -File | Select-Object -First 1
+            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x64_libretro.dll") -Force }
+          } catch {
+            Write-Host "Official buildbot ARM32 C64 core unavailable: $($_.Exception.Message)"
+          }
+          if (!$got) { & .\build-vice-arm.ps1 -EmuType x64 }
 
-      - name: Build VICE ARM32 C128 core
+      - name: Obtain VICE ARM32 C128 core
         shell: pwsh
         working-directory: CommodoreWarpUWP
-        run: .\build-vice-arm.ps1 -EmuType x128
+        run: |
+          $dest = ".\ThirdParty\vice-libretro"
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          $zip = Join-Path $dest "vice_x128_libretro.dll.zip"
+          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x128_libretro.dll.zip"
+          $got = $false
+          try {
+            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
+            Expand-Archive -Path $zip -DestinationPath $dest -Force
+            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x128_libretro.dll" -File | Select-Object -First 1
+            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x128_libretro.dll") -Force }
+          } catch {
+            Write-Host "Official buildbot ARM32 C128 core unavailable: $($_.Exception.Message)"
+          }
+          if (!$got) { & .\build-vice-arm.ps1 -EmuType x128 }
 
       - name: Stage VICE cores
         shell: pwsh
