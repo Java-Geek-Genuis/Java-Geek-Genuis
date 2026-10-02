@@ -69,7 +69,13 @@ jobs:
           $cer = Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\CommodoreWarp_Test.cer"
           Export-Certificate -Cert $cert -FilePath $cer | Out-Null
 
-          $signtool = Get-ChildItem "$env:ProgramFiles(x86)\Windows Kits\10\bin","$env:ProgramFiles\Windows Kits\10\bin" -Recurse -Filter signtool.exe -File -ErrorAction SilentlyContinue |
+          $roots = @(
+            "$env:ProgramFiles(x86)\Windows Kits\10",
+            "$env:ProgramFiles\Windows Kits\10",
+            "$env:ProgramFiles(x86)\Microsoft SDKs\Windows",
+            "$env:ProgramFiles\Microsoft SDKs\Windows"
+          )
+          $signtool = Get-ChildItem $roots -Recurse -Filter signtool.exe -File -ErrorAction SilentlyContinue |
             Sort-Object FullName -Descending |
             Select-Object -First 1
           if (!$signtool) { throw "signtool.exe not found." }
