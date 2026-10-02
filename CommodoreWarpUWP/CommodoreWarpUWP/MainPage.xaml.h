@@ -2,7 +2,7 @@
 #include "MainPage.g.h"
 #include "LibretroCore.h"
 // Final ARM32 packaging verification.
-// Direct MakeAppx packaging workflow enabled.
+// Final artifact upload verification.
 namespace CommodoreWarpUWP {
 public ref class MainPage sealed {
 public:
