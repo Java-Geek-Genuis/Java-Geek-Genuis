@@ -40,7 +40,6 @@ else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     CC = cl.exe
     LD = cl.exe
     fpic :=
-endif
 '@
     $makefile = $makefile.Replace("# Wincross64", $uwpBlock + [Environment]::NewLine + "# Wincross64")
 }
