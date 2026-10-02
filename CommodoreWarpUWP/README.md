@@ -60,3 +60,6 @@ Build tooling: MSYS2 make is installed in CI for the VICE ARM32 compatibility bu
 
 
 VICE ARM32 Makefile patch corrected: custom platform branch now participates in the existing VICE platform chain without prematurely closing it.
+
+
+VICE ARM32 builder now defines the DLL target and applies MSVC flag filtering after VICE's platform/core flags are assembled.
