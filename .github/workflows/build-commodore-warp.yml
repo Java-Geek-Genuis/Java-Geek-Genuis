@@ -28,6 +28,25 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Build VICE ARM32 C64 core
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        run: .\build-vice-arm.ps1 -EmuType x64
+
+      - name: Build VICE ARM32 C128 core
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        run: .\build-vice-arm.ps1 -EmuType x128
+
+      - name: Stage VICE cores
+        shell: pwsh
+        working-directory: CommodoreWarpUWP
+        run: |
+          New-Item -ItemType Directory -Force .\CommodoreWarpUWP\Cores | Out-Null
+          Copy-Item .\ThirdParty\vice-libretro\vice_x64_libretro.dll .\CommodoreWarpUWP\Cores\vice_x64_libretro.dll -Force
+          Copy-Item .\ThirdParty\vice-libretro\vice_x128_libretro.dll .\CommodoreWarpUWP\Cores\vice_x128_libretro.dll -Force
+          Get-ChildItem .\CommodoreWarpUWP\Cores\*.dll | Select-Object Name,Length
+
       - name: Build ARM32 binaries
         shell: pwsh
         working-directory: CommodoreWarpUWP
@@ -42,6 +61,10 @@ jobs:
           New-Item -ItemType Directory -Force $out | Out-Null
           $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter 'CommodoreWarpUWP_*_ARM.appx' -File -ErrorAction SilentlyContinue | Select-Object -First 1
           if (!$pkg) { Write-Error 'MSBuild did not generate an ARM32 .appx package.' }
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          $names = $zip.Entries.FullName
+          $zip.Dispose()
+          if ($names -notcontains 'Cores/vice_x64_libretro.dll' -or $names -notcontains 'Cores/vice_x128_libretro.dll') { Write-Error 'ARM32 VICE core DLLs are missing from AppX.' }
           Copy-Item $pkg.FullName (Join-Path $out 'CommodoreWarp_ARM32.appx') -Force
           $cert = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter '*.cer' -File -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($cert) { Copy-Item $cert.FullName (Join-Path $out $cert.Name) -Force }
