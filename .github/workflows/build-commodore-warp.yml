@@ -1,5 +1,9 @@
 name: Build Commodore Warp ARM32 appx
-# Verified ARM32 UWP packaging pipeline
+# Testable ARM32 package pipeline
+#
+# The current VICE libretro source no longer exposes the legacy UWP/MSVC
+# build target. For a testable Windows Phone package, use the preserved
+# ARM32/MSVC VICE binaries from the public RetroArch-ARM core archive.
 
 on:
   push:
@@ -12,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: commodore-warp-package
+  group: commodore-warp-package-\${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -28,60 +32,25 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >-
-            make
-          path-type: inherit
-
-      - name: Obtain VICE ARM32 C64 core
-        shell: pwsh
-        working-directory: CommodoreWarpUWP
-        run: |
-          $dest = ".\ThirdParty\vice-libretro"
-          New-Item -ItemType Directory -Force $dest | Out-Null
-          $zip = Join-Path $dest "vice_x64_libretro.dll.zip"
-          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x64_libretro.dll.zip"
-          $got = $false
-          try {
-            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
-            Expand-Archive -Path $zip -DestinationPath $dest -Force
-            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x64_libretro.dll" -File | Select-Object -First 1
-            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x64_libretro.dll") -Force }
-          } catch {
-            Write-Host "Official buildbot ARM32 C64 core unavailable: $($_.Exception.Message)"
-          }
-          if (!$got) { & .\build-vice-arm.ps1 -EmuType x64 }
-
-      - name: Obtain VICE ARM32 C128 core
-        shell: pwsh
-        working-directory: CommodoreWarpUWP
-        run: |
-          $dest = ".\ThirdParty\vice-libretro"
-          New-Item -ItemType Directory -Force $dest | Out-Null
-          $zip = Join-Path $dest "vice_x128_libretro.dll.zip"
-          $url = "https://buildbot.libretro.com/nightly/windows-msvc2017-uwp/arm/latest/vice_x128_libretro.dll.zip"
-          $got = $false
-          try {
-            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing -TimeoutSec 30
-            Expand-Archive -Path $zip -DestinationPath $dest -Force
-            $dll = Get-ChildItem $dest -Recurse -Filter "vice_x128_libretro.dll" -File | Select-Object -First 1
-            if ($dll) { $got = $true; Copy-Item $dll.FullName (Join-Path $dest "vice_x128_libretro.dll") -Force }
-          } catch {
-            Write-Host "Official buildbot ARM32 C128 core unavailable: $($_.Exception.Message)"
-          }
-          if (!$got) { & .\build-vice-arm.ps1 -EmuType x128 }
-
-      - name: Stage VICE cores
+      - name: Download ARM32 VICE C64/C128 cores
         shell: pwsh
         working-directory: CommodoreWarpUWP
         run: |
           New-Item -ItemType Directory -Force .\CommodoreWarpUWP\Cores | Out-Null
-          Copy-Item .\ThirdParty\vice-libretro\vice_x64_libretro.dll .\CommodoreWarpUWP\Cores\vice_x64_libretro.dll -Force
-          Copy-Item .\ThirdParty\vice-libretro\vice_x128_libretro.dll .\CommodoreWarpUWP\Cores\vice_x128_libretro.dll -Force
-          Get-ChildItem .\CommodoreWarpUWP\Cores\*.dll | Select-Object Name,Length
+
+          $base = "https://raw.githubusercontent.com/basharast/RetroArch-ARM/894812d2f8a9435ef77e9ae6bc57e303eb45aa32/cores/msvc-cores"
+          Invoke-WebRequest "$base/vice_x64_libretro.dll" -OutFile .\CommodoreWarpUWP\Cores\vice_x64_libretro.dll
+          Invoke-WebRequest "$base/vice_x128_libretro.dll" -OutFile .\CommodoreWarpUWP\Cores\vice_x128_libretro.dll
+
+          foreach ($f in @(".\CommodoreWarpUWP\Cores\vice_x64_libretro.dll", ".\CommodoreWarpUWP\Cores\vice_x128_libretro.dll")) {
+            if (!(Test-Path $f)) { throw "Missing VICE core: $f" }
+            $b = [System.IO.File]::ReadAllBytes((Resolve-Path $f))
+            if ($b.Length -lt 64 -or $b[0] -ne 0x4D -or $b[1] -ne 0x5A) { throw "Not a PE DLL: $f" }
+            $pe = [BitConverter]::ToInt32($b, 0x3C)
+            $machine = [BitConverter]::ToUInt16($b, $pe + 4)
+            if ($machine -ne 0x1C4) { throw ("Expected ARM32 DLL (0x1C4), got 0x{0:X}" -f $machine) }
+            Write-Host ("Verified ARM32 VICE core: {0} ({1} bytes)" -f $f, $b.Length)
+          }
 
       - name: Build ARM32 binaries
         shell: pwsh
@@ -92,26 +61,38 @@ jobs:
       - name: Collect MSBuild-generated ARM32 appx
         shell: pwsh
         run: |
-          $out = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          $out = Join-Path $env:GITHUB_WORKSPACE "artifacts"
           Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force $out | Out-Null
-          $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter 'CommodoreWarpUWP_*_ARM.appx' -File -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (!$pkg) { Write-Error 'MSBuild did not generate an ARM32 .appx package.' }
+
+          $pkg = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\AppPackages") -Recurse -Filter "CommodoreWarpUWP_*_ARM.appx" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (!$pkg) { Write-Error "MSBuild did not generate an ARM32 .appx package." }
+
           $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg.FullName)
-          $names = $zip.Entries.FullName
+          $names = @($zip.Entries.FullName)
           $zip.Dispose()
-          if ($names -notcontains 'Cores/vice_x64_libretro.dll' -or $names -notcontains 'Cores/vice_x128_libretro.dll') { Write-Error 'ARM32 VICE core DLLs are missing from AppX.' }
-          Copy-Item $pkg.FullName (Join-Path $out 'CommodoreWarp_ARM32.appx') -Force
-          $cert = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'CommodoreWarpUWP\AppPackages') -Recurse -Filter '*.cer' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+          if ($names -notcontains "Cores/vice_x64_libretro.dll" -or $names -notcontains "Cores/vice_x128_libretro.dll") {
+            Write-Error "ARM32 VICE core DLLs are missing from AppX."
+          }
+
+          Copy-Item $pkg.FullName (Join-Path $out "CommodoreWarp_ARM32.appx") -Force
+
+          $cert = Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE "CommodoreWarpUWP\AppPackages") -Recurse -Filter "*.cer" -File -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($cert) { Copy-Item $cert.FullName (Join-Path $out $cert.Name) -Force }
 
       - name: Verify package
         shell: pwsh
         run: |
-          $pkg = Join-Path $env:GITHUB_WORKSPACE 'artifacts\CommodoreWarp_ARM32.appx'
-          if (!(Test-Path $pkg)) { Write-Error 'Package missing.' }
+          $pkg = Join-Path $env:GITHUB_WORKSPACE "artifacts\CommodoreWarp_ARM32.appx"
+          if (!(Test-Path $pkg)) { Write-Error "Package missing." }
           Get-Item $pkg | Select-Object FullName,Length
-
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($pkg)
+          $entries = $zip.Entries.FullName
+          $zip.Dispose()
+          "Cores/vice_x64_libretro.dll","Cores/vice_x128_libretro.dll","Assets/logo.png","AppxManifest.xml" | ForEach-Object {
+            if ($entries -notcontains $_) { Write-Error "Missing package entry: $_" }
+          }
 
       - name: Upload ARM32 appx
         uses: actions/upload-artifact@v4
