@@ -51,3 +51,6 @@ CI package definition updated.
 
 
 XAML dependent metadata fixed for ARM32 packaging.
+
+
+ARM32 packaging now builds and embeds the pinned VICE x64 and x128 libretro cores and verifies both are inside the final AppX.
