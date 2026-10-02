@@ -81,3 +81,6 @@ Final CI pass uses a single branch-wide concurrency slot and an absolute Visual 
 
 
 ARM32 VICE compatibility now forces Hostx64\arm\cl.exe and pre-includes msvc_compat.h for GCC builtin compatibility.
+
+
+Final Windows SDK compatibility: VICE MSVC ARM32 build explicitly defines _ARM_ and _M_ARM for winnt.h architecture detection.
