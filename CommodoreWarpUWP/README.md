@@ -96,3 +96,6 @@ Build speed: VICE ARM32 source compilation uses two make workers.
 
 
 Test-package note: the Actions workflow uses preserved ARM32/MSVC VICE DLLs from the public RetroArch-ARM archive and verifies their PE architecture before AppX packaging.
+
+
+Packaging fix: VICE C64/C128 DLLs are explicit DeploymentContent entries in the UWP project so MSBuild includes them in the AppX.
