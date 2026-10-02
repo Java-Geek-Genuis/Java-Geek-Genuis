@@ -57,3 +57,6 @@ ARM32 packaging now builds and embeds the pinned VICE x64 and x128 libretro core
 
 
 Build tooling: MSYS2 make is installed in CI for the VICE ARM32 compatibility build.
+
+
+VICE ARM32 Makefile patch corrected: custom platform branch now participates in the existing VICE platform chain without prematurely closing it.
