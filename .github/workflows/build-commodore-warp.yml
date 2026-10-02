@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: commodore-warp-package-${{ github.sha }}
+  group: commodore-warp-package
   cancel-in-progress: true
 
 jobs:
