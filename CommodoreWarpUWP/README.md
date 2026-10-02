@@ -84,3 +84,6 @@ ARM32 VICE compatibility now forces Hostx64\arm\cl.exe and pre-includes msvc_com
 
 
 Final Windows SDK compatibility: VICE MSVC ARM32 build explicitly defines _ARM_ and _M_ARM for winnt.h architecture detection.
+
+
+VICE ARM32 MSVC now defines NOMINMAX to avoid Windows min/max macro collisions in reSID.
