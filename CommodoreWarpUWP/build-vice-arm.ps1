@@ -109,12 +109,6 @@ Get-Content ".\Makefile.uwp.arm32" | ForEach-Object {
     }
 }
 
-$vcvars = Join-Path "$env:ProgramFiles" "Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
-if (!(Test-Path $vcvars)) {
-    $vcvars = Join-Path "$env:ProgramFiles(x86)" "Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
-}
-if (!(Test-Path $vcvars)) { throw "Visual Studio vcvarsall.bat was not found." }
-
 $make = (Get-Command make.exe -ErrorAction SilentlyContinue).Source
 if (!$make) { $make = "C:\msys64\usr\bin\make.exe" }
 if (!(Test-Path $make)) { throw "MSYS2 make.exe was not found." }
