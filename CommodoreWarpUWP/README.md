@@ -87,3 +87,6 @@ Final Windows SDK compatibility: VICE MSVC ARM32 build explicitly defines _ARM_ 
 
 
 VICE ARM32 MSVC now defines NOMINMAX to avoid Windows min/max macro collisions in reSID.
+
+
+Final emulator path: official Libretro ARM32 VICE cores are preferred; framebuffer upload is handled through the UWP PixelBuffer ABI.
