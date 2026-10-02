@@ -99,3 +99,6 @@ Test-package note: the Actions workflow uses preserved ARM32/MSVC VICE DLLs from
 
 
 Packaging fix: VICE C64/C128 DLLs are explicit DeploymentContent entries in the UWP project so MSBuild includes them in the AppX.
+
+
+Final test build: ARM32 AppX is signed on CI with a temporary CN=Java-Geek-Genuis certificate, and the public certificate is included for sideload testing.
