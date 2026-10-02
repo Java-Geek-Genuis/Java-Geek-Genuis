@@ -20,95 +20,78 @@ git checkout --detach $pin
 
 $makefile = Get-Content ".\Makefile" -Raw
 
+# Add a complete MSVC/UWP ARM32 platform branch to the existing VICE
+# platform-selection chain.  Do not touch the surrounding else/endif
+# structure except for inserting this single branch.
 if ($makefile -notmatch "CommodoreWarpUWP ARM32 MSVC") {
     $uwpBlock = @'
 # CommodoreWarpUWP ARM32 MSVC
-else ifneq (,$(findstring windows_msvc2017,$(platform)))
+else ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
     NO_GCC := 1
     WINDOWS_VERSION = 1
-    PlatformSuffix = $(subst windows_msvc2017_,,$(platform))
-    ifneq (,$(findstring uwp,$(PlatformSuffix)))
-        WinPartition = uwp
-        MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS
-        LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -OPT:REF -SUBSYSTEM:CONSOLE -MANIFESTUAC:NO -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO
-        LDFLAGS += WindowsApp.lib
-    endif
+    WinPartition = uwp
+    TargetArchMoniker = arm
+    MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -D_CRT_SECURE_NO_WARNINGS -EHsc -FS
     CFLAGS += $(MSVC2017CompileFlags)
     CXXFLAGS += $(MSVC2017CompileFlags)
-    TargetArchMoniker = $(subst $(WinPartition)_,,$(PlatformSuffix))
-    CC = cl.exe
+    CFLAGS += -D__WIN32__
+    CXXFLAGS += -D__WIN32__
     CXX = cl.exe
-    LD = link.exe
+    CC = cl.exe
+    LD = cl.exe
     fpic :=
 endif
 '@
     $makefile = $makefile.Replace("# Wincross64", $uwpBlock + [Environment]::NewLine + "# Wincross64")
 }
 
-$makefile = $makefile.Replace(
-    'COMMONFLAGS += -O3 -DNDEBUG -Wno-format -Wno-format-security',
-    'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + '   COMMONFLAGS += -DNDEBUG' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   COMMONFLAGS += -O3 -DNDEBUG -Wno-format -Wno-format-security' + [Environment]::NewLine + 'endif'
-)
-$makefile = $makefile.Replace(
-    'LDFLAGS     += -s',
-    'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   LDFLAGS += -s' + [Environment]::NewLine + 'endif'
-)
-$makefile = $makefile.Replace(
-    'CFLAGS      += $(fpic) $(INCFLAGS) $(COMMONFLAGS) -Wno-old-style-definition',
-    'CFLAGS      += $(fpic) $(INCFLAGS) $(COMMONFLAGS)' + [Environment]::NewLine + 'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   CFLAGS += -Wno-old-style-definition' + [Environment]::NewLine + 'endif'
-)
-$makefile = $makefile.Replace(
-    'LDFLAGS     += -lm $(fpic)',
-    'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   LDFLAGS += -lm $(fpic)' + [Environment]::NewLine + 'endif'
-)
-$makefile = $makefile.Replace(
-    'CXXFLAGS    += -std=c++98',
-    'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   CXXFLAGS += -std=c++98' + [Environment]::NewLine + 'endif'
-)
-$makefile = $makefile.Replace(
-    'COMMONFLAGS += -DHAVE_CONFIG_H -MMD -D__LIBRETRO__',
-    'COMMONFLAGS += -DHAVE_CONFIG_H -D__LIBRETRO__' + [Environment]::NewLine + 'ifneq (,$(findstring msvc,$(platform)))' + [Environment]::NewLine + 'else' + [Environment]::NewLine + '   COMMONFLAGS += -MMD' + [Environment]::NewLine + 'endif'
-)
+# Remove GCC-only command-line switches after the whole makefile has been
+# assembled.  filter-out is safe because these are individual make words.
+$compat = @'
+# CommodoreWarpUWP MSVC output/flag compatibility
+ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
+    COMMONFLAGS := $(filter-out -O3 -Wno-format -Wno-format-security -MMD,$(COMMONFLAGS))
+    CFLAGS := $(filter-out -Wno-old-style-definition -fPIC,$(CFLAGS))
+    CXXFLAGS := $(filter-out -std=c++98 -fPIC,$(CXXFLAGS))
+    LDFLAGS := $(filter-out -s -lm -fPIC,$(LDFLAGS))
+    OBJOUT = -Fo
+    LINKOUT = -Fe
+    LD_EXTRA = -LD
+else
+    OBJOUT = -o
+    LINKOUT = -o
+    LD_EXTRA =
+endif
+'@
+if ($makefile -notmatch "CommodoreWarpUWP MSVC output/flag compatibility") {
+    $makefile = $makefile.Replace("# webOS", $compat + [Environment]::NewLine + "# webOS")
+}
 
-$oldLink = @'
-else
-	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
-endif
-'@
-$newLink = @'
-else ifneq (,$(findstring msvc,$(platform)))
-	$(CXX) -LD -Fe$@ $(OBJECTS) $(LDFLAGS)
-else
-	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
-endif
-'@
-$makefile = $makefile.Replace($oldLink, $newLink)
-
-$oldC = @'
-	$(CC) $(CFLAGS) -c -o $@ $<
-'@
-$newC = @'
-ifneq (,$(findstring msvc,$(platform)))
-	$(CC) $(CFLAGS) -c -Fo$@ $<
-else
-	$(CC) $(CFLAGS) -c -o $@ $<
-endif
-'@
-$makefile = $makefile.Replace($oldC, $newC)
-
-$oldCpp = @'
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-'@
-$newCpp = @'
-ifneq (,$(findstring msvc,$(platform)))
-	$(CXX) $(CXXFLAGS) -c -Fo$@ $<
-else
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-endif
-'@
-$makefile = $makefile.Replace($oldCpp, $newCpp)
+# Keep all recipes unconditional.  Only the output switches vary by platform.
+$makefile = $makefile.Replace(
+    '$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)',
+    '$(CXX) $(LD_EXTRA) $(LINKOUT)$@ $(OBJECTS) $(LDFLAGS)'
+)
+$makefile = $makefile.Replace(
+    '$(CC) $(CFLAGS) -c -o $@ $<',
+    '$(CC) $(CFLAGS) -c $(OBJOUT)$@ $<'
+)
+$makefile = $makefile.Replace(
+    '$(CXX) $(CXXFLAGS) -c -o $@ $<',
+    '$(CXX) $(CXXFLAGS) -c $(OBJOUT)$@ $<'
+)
 
 Set-Content ".\Makefile.uwp.arm32" $makefile -Encoding UTF8
+
+# Show the generated makefile area around the custom platform so a failed
+# build has useful diagnostics in Actions logs.
+$lineNumber = 0
+Get-Content ".\Makefile.uwp.arm32" | ForEach-Object {
+    $lineNumber++
+    if ($lineNumber -ge 75 -and $lineNumber -le 125) {
+        "{0,4}: {1}" -f $lineNumber, $_
+    }
+}
 
 $vcvars = Join-Path "$env:ProgramFiles" "Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
 if (!(Test-Path $vcvars)) {
