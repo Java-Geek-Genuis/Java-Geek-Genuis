@@ -63,3 +63,6 @@ VICE ARM32 Makefile patch corrected: custom platform branch now participates in 
 
 
 VICE ARM32 builder now defines the DLL target and applies MSVC flag filtering after VICE's platform/core flags are assembled.
+
+
+CI toolchain fix: MSYS2 inherits the Visual Studio ARM32 environment so VICE can invoke cl.exe.
